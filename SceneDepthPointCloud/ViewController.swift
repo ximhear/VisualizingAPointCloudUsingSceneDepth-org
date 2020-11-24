@@ -87,9 +87,11 @@ final class ViewController: UIViewController, ARSessionDelegate {
         switch view {
             
         case confidenceControl:
+            GZLogFunc("confidenceThreshold : \(confidenceControl.selectedSegmentIndex)")
             renderer.confidenceThreshold = confidenceControl.selectedSegmentIndex
             
         case rgbRadiusSlider:
+            GZLogFunc("rgbRadius : \(rgbRadiusSlider.value)")
             renderer.rgbRadius = rgbRadiusSlider.value
             
         default:

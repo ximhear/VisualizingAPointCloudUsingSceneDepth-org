@@ -15,7 +15,7 @@ final class Renderer {
     // Number of sample points on the grid
     private let numGridPoints = 500
     // Particle's size in pixels
-    private let particleSize: Float = 10
+    private let particleSize: Float = 20
     // We only use landscape orientation in this app
     private let orientation = UIInterfaceOrientation.landscapeRight
     // Camera's threshold values for detecting when the camera moves so that we can accumulate the points
@@ -51,7 +51,7 @@ final class Renderer {
     // The current viewport size
     private var viewportSize = CGSize()
     // The grid of sample points
-    private lazy var gridPointsBuffer = MetalBuffer<Float2>(device: device,
+    private lazy var gridPointsBuffer = MetalBuffer<Float2>.init(device: device,
                                                             array: makeGridPoints(),
                                                             index: kGridPoints.rawValue, options: [])
     
@@ -118,11 +118,15 @@ final class Renderer {
         // rbg does not need to read/write depth
         let relaxedStateDescriptor = MTLDepthStencilDescriptor()
         relaxedStencilState = device.makeDepthStencilState(descriptor: relaxedStateDescriptor)!
-        
+        GZLogFunc("relaxedStateDescriptor depthCompareFunction : \(relaxedStateDescriptor.depthCompareFunction.rawValue)")
+        GZLogFunc("relaxedStateDescriptor isDepthWriteEnabled : \(relaxedStateDescriptor.isDepthWriteEnabled)")
+
         // setup depth test for point cloud
         let depthStateDescriptor = MTLDepthStencilDescriptor()
         depthStateDescriptor.depthCompareFunction = .lessEqual
         depthStateDescriptor.isDepthWriteEnabled = true
+        GZLogFunc("depthStateDescriptor depthCompareFunction : \(depthStateDescriptor.depthCompareFunction.rawValue)")
+        GZLogFunc("depthStateDescriptor isDepthWriteEnabled : \(depthStateDescriptor.isDepthWriteEnabled)")
         depthStencilState = device.makeDepthStencilState(descriptor: depthStateDescriptor)!
         
         inFlightSemaphore = DispatchSemaphore(value: maxInFlightBuffers)
@@ -163,6 +167,7 @@ final class Renderer {
         let viewMatrixInversed = viewMatrix.inverse
         let projectionMatrix = camera.projectionMatrix(for: orientation, viewportSize: viewportSize, zNear: 0.001, zFar: 0)
         pointCloudUniforms.viewProjectionMatrix = projectionMatrix * viewMatrix
+        //TODO: localToWorld? 왜?
         pointCloudUniforms.localToWorld = viewMatrixInversed * rotateToARCamera
         pointCloudUniforms.cameraIntrinsicsInversed = cameraIntrinsicsInversed
     }
@@ -225,6 +230,14 @@ final class Renderer {
     
     private func shouldAccumulate(frame: ARFrame) -> Bool {
         let cameraTransform = frame.camera.transform
+        // z축의 변화량 2도 이상여부
+//        if dot(cameraTransform.columns.2, lastCameraTransform.columns.2) <= cameraRotationThreshold {
+//            print("cos : \(dot(cameraTransform.columns.2, lastCameraTransform.columns.2))")
+//        }
+        // 움직인 거리 4cm이상
+//        if distance_squared(cameraTransform.columns.3, lastCameraTransform.columns.3) >= cameraTranslationThreshold {
+//            print("dist : \(distance_squared(cameraTransform.columns.3, lastCameraTransform.columns.3))")
+//        }
         return currentPointCount == 0
             || dot(cameraTransform.columns.2, lastCameraTransform.columns.2) <= cameraRotationThreshold
             || distance_squared(cameraTransform.columns.3, lastCameraTransform.columns.3) >= cameraTranslationThreshold
@@ -312,7 +325,10 @@ private extension Renderer {
         let spacing = sqrt(gridArea / Float(numGridPoints))
         let deltaX = Int(round(cameraResolution.x / spacing))
         let deltaY = Int(round(cameraResolution.y / spacing))
-        
+        GZLogFunc("deltaX : \(deltaX)")
+        GZLogFunc("deltaY : \(deltaY)")
+        GZLogFunc("total : \(deltaX * deltaY)")
+
         var points = [Float2]()
         for gridY in 0 ..< deltaY {
             let alternatingOffsetX = Float(gridY % 2) * spacing / 2
@@ -363,6 +379,7 @@ private extension Renderer {
     
     static func makeRotateToARCameraMatrix(orientation: UIInterfaceOrientation) -> matrix_float4x4 {
         // flip to ARKit Camera's coordinate
+        //TODO: 왜 이렇게 해줄까?
         let flipYZ = matrix_float4x4(
             [1, 0, 0, 0],
             [0, -1, 0, 0],
