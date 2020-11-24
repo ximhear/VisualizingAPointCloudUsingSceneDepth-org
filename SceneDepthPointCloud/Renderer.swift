@@ -187,6 +187,26 @@ final class Renderer {
             }
         }
         
+//        let x = currentFrame.rawFeaturePoints?.points.sorted(by: { (a, b) -> Bool in
+//            a.x < b.x
+//        }).last?.x
+//        let y = currentFrame.rawFeaturePoints?.points.sorted(by:  { (a, b) -> Bool in
+//            a.y < b.y
+//        }).last?.y
+//        let z = currentFrame.rawFeaturePoints?.points.sorted(by: { (a, b) -> Bool in
+//            a.z < b.z
+//        }).last?.z
+//        GZLogFunc("max : \(x), \(y), \(z)")
+//        let x1 = currentFrame.rawFeaturePoints?.points.sorted(by: { (a, b) -> Bool in
+//            a.x > b.x
+//        }).last?.x
+//        let y1 = currentFrame.rawFeaturePoints?.points.sorted(by: { (a, b) -> Bool in
+//            a.y > b.y
+//        }).last?.y
+//        let z1 = currentFrame.rawFeaturePoints?.points.sorted(by: { (a, b) -> Bool in
+//            a.z > b.z
+//        }).last?.z
+//        GZLogFunc("min : \(x1), \(y1), \(z1)")
         // update frame data
         update(frame: currentFrame)
         updateCapturedImageTextures(frame: currentFrame)
